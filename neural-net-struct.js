@@ -9,14 +9,8 @@ class neuralNet{
 		
 		for(let i = 0; i < layerSizes.length; i++){
 			this.layers.push(new Array(layerSizes[i]));
-		}
-
-
-		
-		
+		}	
 	}
-
-	// Methods go here
 }
 
 function main(){
