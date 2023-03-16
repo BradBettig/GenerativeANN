@@ -1,5 +1,6 @@
 class neuralNetwork{
 	constructor(networkStruct, inputs){
+		// initialize
 		this.layers = networkStruct;
 		this.inputs = inputs;
 		this.net_struct = [];
@@ -8,7 +9,11 @@ class neuralNetwork{
 		// create an array of integers
 		const layerSizes = this.layers.split(",").map(size => parseInt(size.trim()));
 		const features = this.inputs.split(",").map(size => parseInt(size.trim()));
-
+		// check if number of inputs match input layer
+		if(layerSizes[0] != features.length){
+			throw new Error("input layer mismatch")
+		}
+		// compute neural net
 		for(let i = 0; i < layerSizes.length; i++){
 			// add a layer to the neural net 
 			this.net_struct.push(this.nodes = Array(layerSizes[i]));
@@ -28,6 +33,7 @@ class neuralNetwork{
 			}
 			this.lastlayer = this.nodes;
 		}
+		// print neural net
 		for(let i = 0; i < this.lastlayer.length; i++){
 			console.log(this.lastlayer[i].collector)
 		}
@@ -52,16 +58,27 @@ function getInput(question){
 	// wrap the question in a Promise
 	return new Promise((resolve, reject) => {
 		console.question(question, (input) => {
-			resolve(input);
+			if(input.trim() == ''){ 
+				reject(new Error("no input")); 
+			}
+			else{
+				resolve(input); 
+			}
 		  	console.close();
 		});
 	});
 }
 
 async function main(){
-	const networkStruct = await getInput("Enter a list of numbers separated by a comma to represent the networks structure\n");
-	const inputs = await getInput("Followed by a list of numbers to represent the features for this network (please match the appropriate number of features for the chosen structure)\n");
-	const n = new neuralNetwork(networkStruct, inputs)
+	try{
+		const networkStruct = await getInput("Enter a list of numbers separated by a comma to represent the network structure\n");
+		const inputs = await getInput("Enter a list of numbers separated by a comma for the features of this network\n");
+		const n = new neuralNetwork(networkStruct, inputs)
+	}
+	catch(error) {
+		console.error('Error: '+error.message);
+		process.exit(1);
+	}
 }
 
 main();
