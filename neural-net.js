@@ -20,8 +20,10 @@ class NeuralNetwork {
         		let neuron = {
 					// create an array of weights given the number of neurons in the last layer using + 1 adds a bias
           			weights: Array.from({ length: this.networkStruct[i - 1] + 1 }, () => {
-						// randomize weights
-            			return Math.random() * Math.sqrt(2 / (this.networkStruct[i - 1] + this.networkStruct[i]));
+						// randomize weights, look to improve this further with Xavier/Glorot, He initialization, Orthogonal initialization, Sparse initialization
+						// Xavier/Glorot: Math.random() * Math.sqrt(2 / (this.networkStruct[i - 1] + this.networkStruct[i]));
+						// but random has given lowest amount of epochs at 430
+            			return Math.random();
           		})
         	};
         	layer.push(neuron);
