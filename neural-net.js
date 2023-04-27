@@ -3,7 +3,6 @@ const math = require('mathjs');
 
 class NeuralNetwork {
       constructor(networkStruct, learningRate) {
-
         this.networkStruct = networkStruct;
         this.learningRate = learningRate;
         this.network = this.initializeNetwork();
@@ -14,17 +13,19 @@ class NeuralNetwork {
         let network = [];
         // i = 1 skip first layer
         for (let i = 1; i < this.networkStruct.length; i++) {
-            // create layers
-              let layer = [];
-              for (let j = 0; j < this.networkStruct[i]; j++) {
-                let neuron = {
-                    // create an array of weights given the number of neurons in the last layer using + 1 adds a bias
-                      weights: Array.from({ length: this.networkStruct[i - 1] + 1 }, () => {
-                        // randomize weights, look to improve this further with Xavier/Glorot, He initialization, Orthogonal initialization, Sparse initialization
-                        // Xavier/Glorot: Math.random() * Math.sqrt(2 / (this.networkStruct[i - 1] + this.networkStruct[i]));
-                        // but random has given lowest amount of epochs at 430
-                        return Math.random();
-                  })
+          // create layers
+          let layer = [];
+          for (let j = 0; j < this.networkStruct[i]; j++) {
+            let neuron = {
+              // create an array of weights given the number of neurons in the last layer using + 1 adds a bias
+              weights: Array.from({ length: this.networkStruct[i - 1] + 1 }, () => {
+                // randomize weights, look to improve this further with Xavier/Glorot, He initialization, Orthogonal initialization, Sparse initialization
+                // Xavier/Glorot: Math.random() * Math.sqrt(2 / (this.networkStruct[i - 1] + this.networkStruct[i]));
+                // He Initialization: so far provides lowest average
+                return Math.random() * Math.sqrt(2 / this.networkStruct[i - 1]);
+                // However, random has given lowest amount of epochs at 430 but it's inconsistent
+                //return Math.random();
+              })
             };
             layer.push(neuron);
           }
@@ -32,7 +33,7 @@ class NeuralNetwork {
         }
         return network;
       }
-
+        
       activate(weights, inputs) {
         // initialize activation with bias
         let activation = weights[weights.length - 1];
@@ -64,7 +65,7 @@ class NeuralNetwork {
               }
               currentInputs = newInputs;
         }
-    return currentInputs;
+        return currentInputs;
       }
 
       transferDerivative(output) {
@@ -75,34 +76,33 @@ class NeuralNetwork {
       backwardPropagateError(expectedOutputs) {
         // iterate over layers in reverse order
         for (let i = this.network.length - 1; i >= 0; i--) {
-              const layer = this.network[i];
-            // initialize to handle multiple outputs
-              let errors = [];
-            // for the output layer
-              if (i === this.network.length - 1) {
-                for (let j = 0; j < layer.length; j++) {
-                      const neuron = layer[j];
-                    // calculate the error for each output neuron as the difference between the expected output and actual output
-                      errors.push(neuron.output - expectedOutputs[j]);
-                }
-              } else {
-                // iterate through neurons in the current hidden layer
-                for (let j = 0; j < layer.length; j++) {
-                      let error = 0;
-                    // iterate through neurons in the next layer
-                      for (const neuron of this.network[i + 1]) {
-                        // calculate the accumulated error for the current neuron by summing the product of the connecting neurons weight and its error
-                        error += neuron.weights[j] * neuron.delta;
-                      }
-                      errors.push(error);
-                }
+          const layer = this.network[i];
+          // initialize to handle multiple outputs
+          let errors = [];
+          // for the output layer
+          if (i === this.network.length - 1) {
+            for (let j = 0; j < layer.length; j++) {
+              const neuron = layer[j];
+              // calculate the error for each output neuron as the difference between the expected output and actual output
+              errors.push(neuron.output - expectedOutputs[j]);
+            }
+          } else {
+            // iterate through neurons in the current hidden layer
+            for (let j = 0; j < layer.length; j++) {
+              let error = 0;
+              // iterate through neurons in the next layer
+              for (const neuron of this.network[i + 1]) {
+                // calculate the accumulated error for the current neuron by summing the product of the connecting neurons weight and its error
+                error += neuron.weights[j] * neuron.delta;
               }
-
-              for (let j = 0; j < layer.length; j++) {
-                const neuron = layer[j];
-                // calculate the delta for the neuron using the derivative of the transfer function
-                neuron.delta = errors[j] * this.transferDerivative(neuron.output);
-              }
+              errors.push(error);
+            }
+          }
+          for (let j = 0; j < layer.length; j++) {
+            const neuron = layer[j];
+            // calculate the delta for the neuron using the derivative of the transfer function
+            neuron.delta = errors[j] * this.transferDerivative(neuron.output);
+          }
         }
       }
 
@@ -202,7 +202,7 @@ async function main() {
           const dataset = await readCSVFile(filePath);
   
           const neuralNetwork = new NeuralNetwork(networkStruct, learningRate);
-          neuralNetwork.train(dataset, 1, nEpochs);
+          neuralNetwork.train(dataset, networkStruct[networkStruct.length-1], nEpochs);
   
           console.log('Testing the network...');
           for (const row of dataset) {
