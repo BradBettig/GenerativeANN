@@ -1,5 +1,7 @@
 {
+  "type": "module",
   "dependencies": {
-    "mathjs": "^11.8.0"
+    "mathjs": "^11.8.0",
+    "sqlite3": "^5.1.6"
   }
 }
