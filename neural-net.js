@@ -149,9 +149,9 @@ class NeuralNetwork {
         this.updateWeights(inputs);
       }
       console.log(`> epoch=${epoch}, lrate=${this.learningRate}, error=${sumError}`);
-      if (sumError < 0.05) {
-        // stop training if sum of squared errors is less than 0.05
-        console.log('Converged to an error less than 0.05');
+      if (sumError < 0.01) {
+        // stop training if sum of squared errors is less than 0.05 (for normal ai, 0.01 for generative ai)
+        console.log('Converged to an error less than 0.01');
         return epoch+1;
       }else if (epoch === nEpochs - 1) {
         return nEpochs;
@@ -259,20 +259,44 @@ async function readSQLiteData(dbPath, targetLetter, letterPercentage, totalRows)
   });
 }
 
+function generateData(start, step, inputLength, rows) {
+  let values = [];
+  let val = [];
+  for(let j = 0; j < rows; j++) {
+    let val = [];
+    let x = start + j * step;
+    for(let i = start; i < inputLength + 1; i++) {
+      // Create a new data point
+      const datapoint = (Math.cos(x)+1) * 1/2;
+      val.push(datapoint);
+      x += step;
+    }
+    values.push(val);
+  }
+  //console.log(values);
+  return values;
+}
+
 async function main() {
   try {   
-    const networkStruct = [784, 50, 1]; // network structure [784, 50, 1] works!!!!!
+    const networkStruct = [16, 4, 1]; // network structure [784, 50, 1] works!!!!!
     const learningRate = 0.7;
     const nEpochs = 5000;
     const filePath = 'data.csv';
     const dbPath = 'data/HandwrittenData.db';
-    const letter = 1; // 0-25 for A-Z
+    const letter = 2; // 0-25 for A-Z
     const letterPercentage = 0.2; // percentage of data that contains our selected letter
     const totalRows = 2500; // javascript heap runs out of memory around 8k - 10k rows
-    const dataset = await readSQLiteData(dbPath, letter, letterPercentage, totalRows);
+    //const dataset = await readSQLiteData(dbPath, letter, letterPercentage, totalRows);
     //const dataset = await readCSVFile(filePath);
+    const step = 0.1;
+    const start = 0;
+    const inputLength = 16;
+    const rows = 2000;
+    const dataset = generateData(start, step, inputLength, rows);
     const neuralNetwork = new NeuralNetwork(networkStruct, learningRate);
 
+    /*
     // split data into testing and training
     const splitRatio = 0.8;
     // separate letter and other rows
@@ -292,13 +316,12 @@ async function main() {
     // concatenate the train and test sets for both target letter and other letters
     const trainSet = letterTrainSet.concat(otherTrainSet);
     const testSet = letterTestSet.concat(otherTestSet);
-
-    const epochs = neuralNetwork.train(trainSet, networkStruct[networkStruct.length-1], nEpochs);
-
+    */
+    const epochs = neuralNetwork.train(dataset, networkStruct[networkStruct.length-1], nEpochs);
     const lettr = String.fromCharCode(letter + 65);
     let correctPredictions = 0;
     console.log('Testing the network...');
-    for (let i = testSet.length - 1; i >= 0; i--) {
+    /*for (let i = testSet.length - 1; i >= 0; i--) {
       const row = testSet[i];
       const inputs = row.slice(0, row.length - 1);
       const expectedOutput = row[row.length - 1];
@@ -313,11 +336,24 @@ async function main() {
     }
     // calculate accuracy percentage
     const accuracy = (correctPredictions / testSet.length) * 100;
-    console.log(`Letter ${lettr}`);
+    //console.log(`Letter ${lettr}`);
     console.log(`Rows trained on: ${trainSet.length}`);
     console.log(`Rows tested on: ${testSet.length}`);
     console.log(`Total Epochs: ${epochs}`);
-    console.log(`Accuracy: ${accuracy}%`);
+    console.log(`Accuracy: ${accuracy}%`);*/
+    const row = dataset[0];
+    let x = step*inputLength;
+    for(let i = 0; i < 30; i++) {
+      x += step;
+      const inputs = row.slice(0, row.length - 1);
+      const expectedOutput = row[row.length - 1];
+      const output = neuralNetwork.predict(inputs)[0];
+      row[row.length - 1] = output;
+      row.shift();
+      row.push((Math.cos(x)+1) * 1/2);
+      let accuracy = expectedOutput - output;
+      console.log(`given x: ${(x - step).toFixed(2)}, Expected: ${expectedOutput.toFixed(3)}, Got: ${output.toFixed(3)}, Error: ${accuracy.toFixed(4)}`);
+    }
   } catch (error) {
         console.error('Error: ' + error.message);
         process.exit(1);
